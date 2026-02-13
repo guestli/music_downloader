@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  downloader:
+    build: ./app
+    container_name: music-downloader
+    ports:
+      - "8000:8000"
+    environment:
+      MUSIC_DIR: "/music"
+      NAVIDROME_URL: "http://宿主机IP:4533"
+      NAVIDROME_USER: "你的用户名"
+      NAVIDROME_PASS: "你的密码"
+    volumes:
+      - ~/Music:/music
+    restart: unless-stopped
