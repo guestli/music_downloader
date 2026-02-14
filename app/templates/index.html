@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>音乐下载器</title>
+    <style>
+        body { font-family: Arial; margin: 40px; }
+        label { display:block; margin-top: 10px; }
+        select, input { padding:5px; margin-top:5px; width: 300px; }
+        button { margin-top:15px; padding: 8px 16px; }
+        #status { margin-top:20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>音乐下载器</h1>
+
+    <label>关键词或 URL</label>
+    <input type="text" id="keyword">
+
+    <label>平台</label>
+    <select id="platform">
+        {% for p in platforms %}
+        <option value="{{ p }}">{{ p }}</option>
+        {% endfor %}
+    </select>
+
+    <label>文件格式</label>
+    <select id="format">
+        {% for f in formats %}
+        <option value="{{ f }}">{{ f }}</option>
+        {% endfor %}
+    </select>
+
+    <br>
+    <button onclick="startDownload()">开始下载</button>
+
+    <div id="status"></div>
+
+    <script>
+function startDownload() {
+    const keyword = document.getElementById('keyword').value;
+    const platform = document.getElementById('platform').value;
+    const format = document.getElementById('format').value;
+    const status = document.getElementById('status');
+
+    status.innerText = '创建任务中...';
+
+    fetch(`/download?keyword=${encodeURIComponent(keyword)}&platform=${platform}&file_format=${format}`, {
+        method: 'POST'
+    })
+    .then(r => r.json())
+    .then(data => {
+        const taskId = data.task_id;
+
+        status.innerText = '搜索歌曲中...';
+
+        const ws = new WebSocket(`ws://${location.host}/ws/${taskId}`);
+
+        ws.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+
+            if (msg.type === "progress") {
+                status.innerText = `下载中: ${msg.percent} ${msg.speed}`;
+            }
+
+            if (msg.type === "done") {
+                status.innerText = `完成！文件路径: ${msg.path}`;
+                ws.close();
+            }
+
+            if (msg.type === "error") {
+                status.innerText = `错误: ${msg.msg}`;
+                ws.close();
+            }
+        };
+    })
+    .catch(err => {
+        status.innerText = '请求失败: ' + err;
+    });
+}
+</script>
+
+</body>
+</html>
