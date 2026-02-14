@@ -1,7 +1,8 @@
 fastapi
 uvicorn
+websockets
 yt-dlp
 requests
 mutagen
 beautifulsoup4
-lxml
+jinja2
